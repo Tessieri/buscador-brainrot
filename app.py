@@ -1,0 +1,355 @@
+import streamlit as st
+import google.generativeai as genai
+
+# Configuración de la página web
+st.set_page_config(page_title="Buscador de Personajes IA", page_icon="🔍", layout="centered")
+
+# ===== 1. BASE DE DATOS =====
+MIS_PERSONAJES = """
+Nobini Pizzanini:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Lirili Larila:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tim Cheese:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Fluriflura:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Talpa Di Fero:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Svinina Bombardino:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Nobini Santini:Comun, Radioactive, Cursed, Divine, Cyber
+Raccooni Jandelini:Comun, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pipi Kiwi:Comun, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tartaragno:Comun, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Holy Arepa:Comun, Divine, Cyber
+Pipi Corni:Comun, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+
+Trippi Troppi:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Gangster Footera:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bandito Bobritto:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Boneca Ambalabu:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cacto Hipopotamo:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ta Ta Ta Ta Sahur:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cupcake Koala:Raro, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tric Trac Barabom:Raro, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Frogo Elfo:Raro, Radioactive, Cursed, Divine, Cyber
+Pipi Avocado:Raro, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pengolino Nuvoletto:Raro, Divine, Cyber
+Pinealotto Fruttarino:Raro, Ying Yang, Radioactive, Cursed, Divine, Cyber
+
+Cappuccino Assassino:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Brr Brr Patapim:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Avocadini Antilopini:Epico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Trulimero Trulicina:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bambini Crostini:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Malame Amarele:Epico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bananita Dolphinita:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Perochello Lemonchello:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Brri Brri Bicus Dicus Bombicus:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Avocadini Guffo:Epico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ti Ti Ti Sahur:Epico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Mangolini Parrochini:Epico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Frogato Pirato:Epico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Gato Celesto:Epico, Divine, Cyber
+Salamino Penguino:Epico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Doi Doi Doi:Epico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Penguin Tree:Epico, Radioactive, Cursed, Divine, Cyber
+Wombo Rollo:Epico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Penguino Cocosino:Epico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Mummio Rappitto:Epico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+
+Burbaloni Loliloli:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Chimpanzini Bananini:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ballerina Capuccina:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Chef Crabracadabra:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Lionel Cactuseli:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Glorbo Fruttodrillo:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Quivioli Ameleonni:Legendario, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bluberrini Octopusini:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Clickerino Crabo:Legendario, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Caramello Filtrello:Legendario, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pipi Potato:Legendario, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Strawberrelli Flamingelli:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cocosini Mama:Legendario, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bandito Axolito:Legendario, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pandaccini Bananini:Legendario, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Quackula:Legendario, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pi Pi Watermelon:Legendario, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Buho Del Cielo:Legendario, Divine, Cyber
+Sigma Boy:Legendario, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Chocco Bunny:Legendario, Radioactive, Cursed, Divine, Cyber
+Puffaball:Legendario, Radioactive, Cursed, Divine, Cyber
+Sigma Girl:Legendario, Radioactive, Cursed, Divine, Cyber
+Sealo Regalo:Legendario, Radioactive, Cursed, Divine, Cyber
+Electro Quacko:Legendario, Cyber
+Buho de Fuego:Legendario, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Seraphino Gruyero:Legendario, Divine, Cyber
+
+Frigo Camelo:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Orangutini Ananassini:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Rhino Toasterino:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bombardiro Crocodilo:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Brutto Gialutto:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Spioniro Golubiro:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bombombini Gusini:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Zibra Zubra Zibralini:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tigrilini Watermelini:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Avocadorilla:Mitico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cavallo Virtuoso:Mitico, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Gorillo Subwoofero:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Gorillo Watermelondrillo:Mitico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Stoppo Luminino:Mitico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tob Tobi Tobi:Mitico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Lerulerulerule:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ganganzelli Trulala:Mitico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Te Te Te Sahur:Mitico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Rhino Helicopterino:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Magi Ribbitini:Mitico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tracoducotulu Delapeladustuz:Mitico, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Jingle Jingle Sahur:Mitico, Radioactive, Cursed, Divine, Cyber
+Los Noobinis:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cachorrito Melonito:Mitico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Spongini Quackini:Mitico, Cursed, Divine, Cyber
+Carloo:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bee Loco:Mitico, Cyber
+Harpuccino:Mitico, Divine, Cyber
+Carrotini Brainini:Mitico, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cocoteddy:Mitico, Cyber
+Centrucci Nuclucci:Mitico, Radioactive, Cursed, Divine, Cyber
+Toiletto Focaccino:Mitico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Jacko Spaventosa:Mitico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bananito Bandito:Mitico, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tree Tree Tree Sahur:Mitico, Radioactive, Cursed, Divine, Cyber
+Fizzy Soda:Mitico, Cursed, Divine, Cyber
+Berenjello Angello:Mitico, Divine, Cyber
+Bucketoro:Mitico, Cyber
+Orbi Mochi:Mitico, Cyber
+
+Cocofanto Elefanto:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Girafa Celestre:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Gattatino Nyanino:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Chihuanini Taconini:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Matteo:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tralalero Tralala:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Crocodillitos:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tigroligre Frutonni:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Money Money Man:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Espresso Signora:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Unclito Samito:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Odin Din Din Dun:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tipi Topi Taco:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Alessio:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tralalita Tralala:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Orcalero Orcala:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tukanno Bananno:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Extinct Ballerina:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Vampira Cappucina:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Jacko Jack Jack:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Urubini Flamenguini:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Trenostuzzo Turbo 3000:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Capi Taco:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Chihuaninis:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Divino Platypio:Brainrot God, Divine, Cyber
+Gattito Tacoto:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Trippi Troppi Troppa Trippa:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Sundrilla Sundae:Brainrot God, Cyber
+Las Capuchinas:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ballerino Lololo:Brainrot God, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pineaplino:Brainrot God, Divine, Cyber
+Bulbito Bandito Traktorito:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Tungtungtungcitos:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pakrahmatmamat:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ballerina Peppermintina:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Los Bombinitos:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bombardini Tortini:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pakrahmatmatina:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Brr Es Teh Patipum:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Piccione Macchina:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tractoro Dinosauro:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Orcalitos:Brainrot God, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Grabbo Limonetta:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Orcalita Orcala:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cacasito Satalito:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Aquanaut:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Squalanana:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Corn Corn Corn Sahur:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tartaruga Cisterna:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Mummy Ambalabu:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Snailenzo:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Lazy Ducky:Brainrot God, Divine, Cyber
+Trenotubo Axolotrico 9000:Brainrot God, Cyber
+Yeti Claus:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Ginger Globo:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Tootini Shrimpini:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Los Tipi Tacos:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Granchiello Spiritello:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Frio Ninja:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Lumaca Malefica:Brainrot God, Cyber
+Buho De Noelo:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Boba Panda:Brainrot God, Divine, Cyber
+Bunny Tralala:Brainrot God, Divine, Cyber
+Piccionetta Macchina:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bambu Bambu Sahur:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Gattitos:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Mastodontico Telepiedone:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Christmasmamat:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Anpali Babel:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Limonita Splashita:Brainrot God, Cyber
+Noo La Polizia:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Astrolero Cervalero:Brainrot God, Divine, Cyber
+Cappuccino Clownino:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Brasilini Berimbini:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Luv Luv Luv:Brainrot God, Cursed, Divine, Cyber
+Patteo:Brainrot God, Divine, Cyber
+Krupuk Pagi Pagi:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Skull Skull Skull:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Belula Beluga:Brainrot God, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Cocoa Assassino:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Tentacolo Tecnico:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Ginger Cisterna:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Pandanini Frostini:Brainrot God, Radioactive, Cursed, Divine, Cyber
+Dolphini Jetskini:Brainrot God, Cursed, Divine, Cyber
+Pop Pop Sahur:Brainrot God, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Karkerheart Luvkur:Brainrot God, Cursed, Divine, Cyber
+Appelini:Brainrot God, Divine, Cyber
+Clovkur Kurkur:Brainrot God, Divine, Cyber
+Eggdin Egg Egg Dun:Brainrot God, Divine, Cyber
+Dumborino Miracello:Brainrot God, Divine, Cyber
+Flippo Marino:Brainrot God, Cyber
+Robo Grafito:Brainrot God, Cyber
+Tortuginni Sandcastlini:Brainrot God, Cyber
+Pretzo Robo:Brainrot God, Cyber
+
+Jackorilla:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Sammyni Spyderini:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+La Vacca Saturno Saturnita:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Karkerkar Kurkur:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Matteos:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bisonte Giuppitere:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Trenostruzzo Turbo 4000:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tortuginni Dragonfrutini:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Dul Dul Dul:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Blackhole Goat:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Chachechi:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Agarrini La Palini:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Spyderinis:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Extinct Tralalero:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+La Cucaracha:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Tortus:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los tralaleritos:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Zombie Tralala:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Vulturino Skeletono:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Boatito Auratito:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Guerriro Digitale:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Yess My Examine:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+La Vacca Prese Presente:Secret, Radioactive, Cursed, Divine, Cyber
+La Karkerkar Combinasion:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Reindeer Tralala:Secret, Radioactive, Cursed, Divine, Cyber
+Extinct Mateo:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Las Tralaleritas:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pumpkini Spyderini:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Rocco Disco:Secret, Radioactive, Cursed, Divine, Cyber
+Frankentteo:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Trios:Secret, Cursed, Divine, Cyber
+Job Job Job Sahur:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Karker Sahur:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Las Vaquitas Saturnitas:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Karkeritos:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Santteo:Secret, Radioactive, Cursed, Divine, Cyber
+Fishboard:Secret, Divine, Cyber
+La Vacca Jacko Linterino:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Buntteo:Secret, Divine, Cyber
+Triplito Tralaleritos:Secret, Radioactive, Cursed, Divine, Cyber
+Trickolino:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Paradiso Axolottino:Secret, Divine, Cyber
+Goat:Secret, Cursed, Divine, Cyber
+Giftini Spyderini:Secret, Radioactive, Cursed, Divine, Cyber
+Perrito Burrito:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Graipuss Medussi:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Love Love Love Sahur:Secret, Cursed, Divine, Cyber
+Bombardiro Vaccariro:Secret, Cyber
+La Vacca Lepre Leprino:Secret, Divine, Cyber
+1x1x1x1:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Cucarachas:Secret, Radioactive, Cursed, Divine, Cyber
+Easter Easter Easter Sahur:Secret, Divine, Cyber
+Craburger:Secret, Cyber
+Please My Present:Secret, Radioactive, Cursed, Divine, Cyber
+Cuadramat And Pakrahmatmamat:Secret, Radioactive, Cursed, Divine, Cyber
+Los Jobcitos:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bunnyman:Secret, Radioactive, Cursed, Divine, Cyber
+Berryno:Secret, Divine, Cyber
+Nooo My Hotspot:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Noo My Examine:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Telemorte:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+La Sahur Combinasion:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+List List List Sahur:Secret, Radioactive, Cursed, Divine, Cyber
+To To To Sahur:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bunny Bunny Bunny Sahur:Secret
+Glaciator:Secret, Cyber
+Pirulitoita Bicicleteira:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Pot Hotspot:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+25:Secret, Radioactive, Cursed, Divine, Cyber
+Santa Hotspot:Secret, Radioactive, Cursed, Divine, Cyber
+Buho De Volto:Secret, Cyber
+Horegini Boom:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Rocketini Frostini:Secret, Cyber
+Pot Pumpkin:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Naughty Naughty:Secret, Radioactive, Cursed, Divine, Cyber
+Quesadilla Crocodila:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bunito Bunito Spinito:Secret, Radioactive, Cursed, Divine, Cyber
+Cupid Cupid Sahur:Secret, Cursed, Divine, Cyber
+Ho Ho Ho Sahur:Secret, Radioactive, Cursed, Divine, Cyber
+Mi Gatito:Secret, Cursed, Divine, Cyber
+Octoball:Secret, Cyber
+Cupid Hotspot:Secret, Cursed, Divine, Cyber
+Quesadillo Vampiro:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Brunito Marsito:Secret, Cursed, Divine, Cyber
+Eid Eid Eid Sahur:Secret, Divine, Cyber
+Chicleteira Bicicleteira:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Luck Luck Luck Sahur:Secret, Divine, Cyber
+Flancito:Secret, Cyber
+Burrito Bandito:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Chicleterina Bichicleterina:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Granny:Secret, Divine, Cyber
+Chill Puppy:Secret, Cursed, Divine, Cyber
+Los Bunitos:Secret, Divine, Cyber
+Futbolini Skatini:Secret, Cyber
+Los Quesadillas:Secret, Cursed, Divine, Cyber
+Noo My Candy:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Arcadopus:Secret, Cursed, Divine, Cyber
+Los Nooo My Hotspotsitos:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Serafinna Medusella:Secret, Divine, Cyber
+Noo My Present:Secret, Radioactive, Cursed, Divine, Cyber
+Rang Ring Bus:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Flipa Sandala:Secret, Cyber
+Los Mi Gatitos:Secret, Cursed, Divine, Cyber
+Obrello Topolino:Secret, Cyber
+Strawberrita:Secret, Divine, Cyber
+Los Chicleteiras:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Noo My Eggs:Secret, Divine, Cyber
+John Doe:Secret, Cyber
+67:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Donkeyturbo Express:Secret, Radioactive, Cursed, Divine, Cyber
+Sushi Inu:Secret, Cyber
+Los Burritos:Secret, Radioactive, Cursed, Divine, Cyber
+Los 25:Secret, Radioactive, Cursed, Divine, Cyber
+La Grande Combinasion:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Tacodrillo Crocodillo:Secret, Divine, Cyber
+Mariachi Corazoni:Secret, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Noo My Heart:Secret, Cursed, Divine, Cyber
+Swag Soda:Secret, Radioactive, Cursed, Divine, Cyber
+Noo My Gold:Secret, Divine, Cyber
+Chimnino:Secret, Radioactive, Cursed, Divine, Cyber
+Nuclearo Dinossauro:Secret, Candy, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Bananito:Secret, Divine, Cyber
+Chicleteira Noelteira:Secret, Radioactive, Cursed, Divine, Cyber
+Los Combinasionas:Secret, Lava, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Baskito:Secret, Divine, Cyber
+Tacorita Bicicleta:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Los Sweethearts:Secret, Cursed, Divine, Cyber
+Camera Ramena:Secret, Cyber
+Spinny Hammy:Secret, Cursed, Divine, Cyber
+DJ Panda:Secret, Divine, Cyber
+Chicleteira Cupideira:Secret, Cursed, Divine, Cyber
+Las Sis:Secret, Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber
+Girafini Raftini:Secret, Cyber
+Snailo Clovero:Secret, Divine, Cyber
+Los Planitos:Secret, Radioactive, Cursed, Divine, Cyber
+Los Jolly Combinasionas:Secret, Radioactive, Cursed, Divine, Cyber
+Cigno Fulgoro:Secret, Divine, Cyber
+Los Hotspotsitos:Secret,
