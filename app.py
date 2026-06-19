@@ -6,7 +6,7 @@ import json
 # Configuración de la página web
 st.set_page_config(page_title="Buscador de Personajes IA", page_icon="🔍", layout="centered")
 
-GEMINI_API_KEY = 'AQ.Ab8RN6LRKlXmJZhz7P-zCjh2q5Nu8Greib1z4qquMNt9YiCRPw'
+GEMINI_API_KEY = 'AIzaSyB2FdaJlaxuYvRfonqoGrcSA_rN6gcO7Wg'
 
 def preguntar_ia(pregunta, base_datos_json):
     instrucciones_sistema = (
