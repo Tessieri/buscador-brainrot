@@ -27,7 +27,6 @@ def conectar_gemini():
     if "GEMINI_API_KEY" in st.secrets:
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            # Formato estándar compatible con la versión actualizada de la librería
             return genai.GenerativeModel('gemini-1.5-flash')
         except Exception as e:
             st.error(f"Error al configurar la conexión de Gemini: {e}")
@@ -45,17 +44,22 @@ consulta = st.text_input(
 )
 
 if st.button("Buscar"):
-    if consulta:
-        if model:
-            with st.spinner("Escaneando la base de datos con IA..."):
-                try:
-                    # Forzamos temperatura 0.0 para máxima precisión (cero creatividad)
-                    config = genai.GenerationConfig(temperature=0.0)
-                    
-                    # Combinamos el contexto de los personajes con la pregunta
-                    prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
-                    
-                    resultado = model.generate_content(prompt_final, generation_config=config)
-                    
-                    st.success("¡Búsqueda finalizada!")
-                    st.write(resultado.text)
+    if not consulta:
+        st.info("Por favor, escribe una pregunta primero.")
+    elif not model:
+        st.error("La IA no está disponible porque falta la API Key o hay un problema de configuración.")
+    else:
+        with st.spinner("Escaneando la base de datos con IA..."):
+            try:
+                # Forzamos temperatura 0.0 para máxima precisión (cero creatividad)
+                config = genai.GenerationConfig(temperature=0.0)
+                
+                # Combinamos el contexto de los personajes con la pregunta
+                prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
+                
+                resultado = model.generate_content(prompt_final, generation_config=config)
+                
+                st.success("¡Búsqueda finalizada!")
+                st.write(resultado.text)
+            except Exception as e:
+                st.error(f"Error al procesar la consulta con la IA: {e}")
