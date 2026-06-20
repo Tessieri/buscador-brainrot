@@ -1,44 +1,68 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Buscador Brainrot", page_icon="🔍", layout="centered")
+# --- 1. CONFIGURACIÓN DE LA PÁGINA ---
+st.set_page_config(
+    page_title="Buscador de Personajes - Brainrot", 
+    page_icon="🔍", 
+    layout="centered"
+)
 
 st.title("🔍 Buscador de Personajes - Brainrot")
-st.write("Introduce tu consulta para buscar variantes y rarezas.")
+st.write("Introduce tu consulta para buscar variantes y rarezas de forma exacta.")
 
-# --- INICIALIZACIÓN SEGURA DE LA IA ---
+# --- 2. BASE DE DATOS DE PERSONAJES (PROMPT ASISTENTE) ---
+# Aquí puedes dejar tu lista para que la IA siempre la tenga como referencia de verdad.
+INFORMACION_CONTEXTO = """
+Eres un buscador experto y estricto para el juego 'Steal a Brainrot' en Roblox.
+Tu única fuente de verdad es la lista de personajes que tienes abajo. 
+Si el usuario te pide contar o buscar variantes (como 'Candy'), busca de forma literal línea por línea.
+No inventes personajes ni asumas variantes si no están en este texto.
+
+[AQUÍ PUEDES PEGAR TU LISTA COMPLETA DE LOS 62 PERSONAJES CON SUS RARIDADES]
+"""
+
+# --- 3. INICIALIZACIÓN SEGURA DE LA IA ---
 def conectar_gemini():
-    # Buscamos si la clave existe en Secrets sin romper la app
+    # Verifica de forma segura si la clave existe en los Secrets de Streamlit
     if "GEMINI_API_KEY" in st.secrets:
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            return genai.GenerativeModel('gemini-1.5-flash')
+            # Usamos 'gemini-pro' para evitar el error 404 de compatibilidad
+            return genai.GenerativeModel('gemini-pro')
         except Exception as e:
-            st.error(f"Error al configurar Gemini: {e}")
+            st.error(f"Error al configurar la conexión de Gemini: {e}")
             return None
     else:
-        st.warning("⚠️ La API Key no está configurada en los Secrets de Streamlit.")
+        st.warning("⚠️ La API Key no está configurada en los Secrets de Streamlit. Ve a Settings -> Secrets y agrégala.")
         return None
 
 model = conectar_gemini()
 
-# --- INTERFAZ GRÁFICA (Aparecerá pase lo que pase) ---
-consulta = st.text_input("¿Qué personaje o variante quieres buscar?", placeholder="Ej. Cuantos candys hay?")
+# --- 4. INTERFAZ GRÁFICA Y LÓGICA DE BÚSQUEDA ---
+consulta = st.text_input(
+    "¿Qué personaje o variante quieres buscar?", 
+    placeholder="Ej. ¿Cuántos personajes comunes tienen la variante Candy?"
+)
 
 if st.button("Buscar"):
     if consulta:
         if model:
-            with st.spinner("Buscando en la base de datos con IA..."):
+            with st.spinner("Escaneando la base de datos con IA..."):
                 try:
+                    # Forzamos temperatura 0.0 para máxima precisión matemática (cero creatividad)
                     config = genai.GenerationConfig(temperature=0.0)
-                    # Aquí puedes concatenar tu lista de personajes al prompt si la tienes guardada
-                    resultado = model.generate_content(consulta, generation_config=config)
-                    st.success("¡Resultados encontrados!")
+                    
+                    # Juntamos tus datos fijos con la pregunta del usuario
+                    prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
+                    
+                    resultado = model.generate_content(prompt_final, generation_config=config)
+                    
+                    st.success("¡Búsqueda finalizada!")
                     st.write(resultado.text)
                 except Exception as e:
                     st.error(f"Error al procesar la consulta con la IA: {e}")
         else:
-            st.error("No se puede realizar la búsqueda porque la IA no está conectada.")
+            st.error("La IA no está disponible porque falta la API Key en los Secrets.")
     else:
-        st.info("Por favor, escribe una pregunta primero.")
+        st.info("Por favor, escribe una pregunta o el nombre de un personaje primero.")
