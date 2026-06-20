@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
@@ -22,16 +23,12 @@ Cuenta con precisión matemática, asegurándote de revisar toda la lista.
 [AQUÍ PEGA TU LISTA COMPLETA DE LOS 62 PERSONAJES CON SUS RARIDADES]
 """
 
-# --- 3. INICIALIZACIÓN SEGURA DE LA IA ---
+# --- 3. INICIALIZACIÓN SEGURA DEL CLIENTE ---
 def conectar_gemini():
     if "GEMINI_API_KEY" in st.secrets:
         try:
-            # Configura la clave que guardaste en Secrets
-            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            
-            # Forzamos la inicialización explícita del modelo funcional
-            return genai.GenerativeModel(model_name='gemini-1.5-flash')
-            
+            # Usamos el nuevo cliente oficial e independiente de la librería moderna
+            return genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
         except Exception as e:
             st.error(f"Error al configurar la conexión de Gemini: {e}")
             return None
@@ -39,7 +36,7 @@ def conectar_gemini():
         st.warning("⚠️ La API Key no está configurada en los Secrets de Streamlit. Ve a Settings -> Secrets para agregarla.")
         return None
 
-model = conectar_gemini()
+client = conectar_gemini()
 
 # --- 4. INTERFAZ GRÁFICA Y LÓGICA DE BÚSQUEDA ---
 consulta = st.text_input(
@@ -50,18 +47,23 @@ consulta = st.text_input(
 if st.button("Buscar"):
     if not consulta:
         st.info("Por favor, escribe una pregunta primero.")
-    elif not model:
-        st.error("La IA no está disponible porque falta la API Key o la API de Google Cloud está desactivada.")
+    elif not client:
+        st.error("La IA no está disponible porque falta la API Key o la configuración es incorrecta.")
     else:
         with st.spinner("Escaneando la base de datos con IA..."):
             try:
-                # Fijamos temperatura 0.0 para que cuente y busque con precisión total
-                config = genai.GenerationConfig(temperature=0.0)
+                # Configuramos los parámetros con el nuevo formato 'types'
+                config = types.GenerateContentConfig(
+                    temperature=0.0,
+                    system_instruction=INFORMACION_CONTEXTO
+                )
                 
-                # Unimos tu lista de personajes con lo que escribe el usuario
-                prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
-                
-                resultado = model.generate_content(prompt_final, generation_config=config)
+                # Llamada directa al modelo usando el cliente moderno
+                resultado = client.models.generate_content(
+                    model='gemini-1.5-flash',
+                    contents=consulta,
+                    config=config
+                )
                 
                 st.success("¡Búsqueda finalizada!")
                 st.write(resultado.text)
