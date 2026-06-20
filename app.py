@@ -24,18 +24,11 @@ Cuenta con precisión matemática, asegurándote de revisar toda la lista.
 
 # --- 3. INICIALIZACIÓN SEGURA DE LA IA ---
 def conectar_gemini():
-    # Verifica de forma segura si la clave existe en los Secrets de Streamlit
     if "GEMINI_API_KEY" in st.secrets:
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            
-            # Intentamos cargar con el prefijo completo para resolver el error 404 en entornos v1beta
-            try:
-                return genai.GenerativeModel('models/gemini-1.5-flash')
-            except Exception:
-                # Si falla, intentamos con el formato estándar por si la librería es más reciente
-                return genai.GenerativeModel('gemini-1.5-flash')
-                
+            # Usamos directamente el prefijo completo de la API que es el estándar requerido en entornos Cloud
+            return genai.GenerativeModel('models/gemini-1.5-flash')
         except Exception as e:
             st.error(f"Error al configurar la conexión de Gemini: {e}")
             return None
@@ -60,3 +53,15 @@ if st.button("Buscar"):
                     config = genai.GenerationConfig(temperature=0.0)
                     
                     # Combinamos el contexto de los personajes con la pregunta
+                    prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
+                    
+                    resultado = model.generate_content(prompt_final, generation_config=config)
+                    
+                    st.success("¡Búsqueda finalizada!")
+                    st.write(resultado.text)
+                except Exception as e:
+                    st.error(f"Error al procesar la consulta con la IA: {e}")
+        else:
+            st.error("La IA no está disponible porque falta la API Key o hay un problema de configuración.")
+    else:
+        st.info("Por favor, escribe una pregunta primero.")
