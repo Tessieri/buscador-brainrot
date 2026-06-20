@@ -26,8 +26,12 @@ Cuenta con precisión matemática, asegurándote de revisar toda la lista.
 def conectar_gemini():
     if "GEMINI_API_KEY" in st.secrets:
         try:
+            # Configura la clave que guardaste en Secrets
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            return genai.GenerativeModel('gemini-1.5-flash')
+            
+            # Forzamos la inicialización explícita del modelo funcional
+            return genai.GenerativeModel(model_name='gemini-1.5-flash')
+            
         except Exception as e:
             st.error(f"Error al configurar la conexión de Gemini: {e}")
             return None
@@ -47,14 +51,14 @@ if st.button("Buscar"):
     if not consulta:
         st.info("Por favor, escribe una pregunta primero.")
     elif not model:
-        st.error("La IA no está disponible porque falta la API Key o hay un problema de configuración.")
+        st.error("La IA no está disponible porque falta la API Key o la API de Google Cloud está desactivada.")
     else:
         with st.spinner("Escaneando la base de datos con IA..."):
             try:
-                # Forzamos temperatura 0.0 para máxima precisión (cero creatividad)
+                # Fijamos temperatura 0.0 para que cuente y busque con precisión total
                 config = genai.GenerationConfig(temperature=0.0)
                 
-                # Combinamos el contexto de los personajes con la pregunta
+                # Unimos tu lista de personajes con lo que escribe el usuario
                 prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
                 
                 resultado = model.generate_content(prompt_final, generation_config=config)
