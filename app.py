@@ -27,8 +27,8 @@ def conectar_gemini():
     if "GEMINI_API_KEY" in st.secrets:
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            # Usamos directamente el prefijo completo de la API que es el estándar requerido en entornos Cloud
-            return genai.GenerativeModel('models/gemini-1.5-flash')
+            # Formato estándar compatible con la versión actualizada de la librería
+            return genai.GenerativeModel('gemini-1.5-flash')
         except Exception as e:
             st.error(f"Error al configurar la conexión de Gemini: {e}")
             return None
@@ -59,9 +59,3 @@ if st.button("Buscar"):
                     
                     st.success("¡Búsqueda finalizada!")
                     st.write(resultado.text)
-                except Exception as e:
-                    st.error(f"Error al procesar la consulta con la IA: {e}")
-        else:
-            st.error("La IA no está disponible porque falta la API Key o hay un problema de configuración.")
-    else:
-        st.info("Por favor, escribe una pregunta primero.")
