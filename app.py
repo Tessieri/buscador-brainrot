@@ -12,29 +12,27 @@ st.title("🔍 Buscador de Personajes - Brainrot")
 st.write("Introduce tu consulta para buscar variantes y rarezas de forma exacta.")
 
 # --- 2. BASE DE DATOS DE PERSONAJES (PROMPT ASISTENTE) ---
-# Aquí puedes dejar tu lista para que la IA siempre la tenga como referencia de verdad.
 INFORMACION_CONTEXTO = """
 Eres un buscador experto y estricto para el juego 'Steal a Brainrot' en Roblox.
 Tu única fuente de verdad es la lista de personajes que tienes abajo. 
 Si el usuario te pide contar o buscar variantes (como 'Candy'), busca de forma literal línea por línea.
 No inventes personajes ni asumas variantes si no están en este texto.
 
-[AQUÍ PUEDES PEGAR TU LISTA COMPLETA DE LOS 62 PERSONAJES CON SUS RARIDADES]
+[AQUÍ PEGA TU LISTA COMPLETA DE LOS 62 PERSONAJES CON SES RARIDADES]
 """
 
 # --- 3. INICIALIZACIÓN SEGURA DE LA IA ---
 def conectar_gemini():
-    # Verifica de forma segura si la clave existe en los Secrets de Streamlit
     if "GEMINI_API_KEY" in st.secrets:
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            # Usamos 'gemini-pro' para evitar el error 404 de compatibilidad
-            return genai.GenerativeModel('gemini-pro')
+            # Usamos 'gemini-1.5-flash' que es el modelo vigente y soportado
+            return genai.GenerativeModel('gemini-1.5-flash')
         except Exception as e:
             st.error(f"Error al configurar la conexión de Gemini: {e}")
             return None
     else:
-        st.warning("⚠️ La API Key no está configurada en los Secrets de Streamlit. Ve a Settings -> Secrets y agrégala.")
+        st.warning("⚠️ La API Key no está configurada en los Secrets de Streamlit.")
         return None
 
 model = conectar_gemini()
@@ -50,10 +48,8 @@ if st.button("Buscar"):
         if model:
             with st.spinner("Escaneando la base de datos con IA..."):
                 try:
-                    # Forzamos temperatura 0.0 para máxima precisión matemática (cero creatividad)
+                    # Temperatura 0.0 para que no invente datos y sea exacto
                     config = genai.GenerationConfig(temperature=0.0)
-                    
-                    # Juntamos tus datos fijos con la pregunta del usuario
                     prompt_final = f"{INFORMACION_CONTEXTO}\n\nPregunta del usuario: {consulta}"
                     
                     resultado = model.generate_content(prompt_final, generation_config=config)
@@ -65,4 +61,4 @@ if st.button("Buscar"):
         else:
             st.error("La IA no está disponible porque falta la API Key en los Secrets.")
     else:
-        st.info("Por favor, escribe una pregunta o el nombre de un personaje primero.")
+        st.info("Por favor, escribe una pregunta primero.")
