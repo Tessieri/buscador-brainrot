@@ -1,16 +1,18 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Streamlit busca la clave de forma ultra secreta en sus servidores
-if "GEMINI_API_KEY" in st.secrets:
+# 1. Configurar la clave de forma segura desde los Secrets
+try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-else:
-    st.error("Falta configurar la API Key en los Secrets de Streamlit.")
+except Exception as e:
+    st.error("Error al cargar la API Key. Verifica los Secrets en Streamlit.")
 
-# 2. Creas la función para consultar al modelo
+# 2. Función para preguntar a la IA (con temperatura 0 para evitar variaciones)
 def preguntar_ia(consulta):
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    # Configuración para que sea exacto con tus datos (Temperatura 0)
-    config = genai.GenerationConfig(temperature=0.0)
-    respuesta = model.generate_content(consulta, generation_config=config)
-    return respuesta.text
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        config = genai.GenerationConfig(temperature=0.0)
+        resultado = model.generate_content(consulta, generation_config=config)
+        return resultado.text
+    except Exception as e:
+        return f"Error al procesar la consulta: {str(e)}"
