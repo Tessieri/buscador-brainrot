@@ -491,7 +491,7 @@ st.markdown("### 📊 Tablero de Conteos Generales")
 m1, m2, m3 = st.columns(3)
 m1.metric(label="Total Personajes Registrados", value=total_personajes)
 m2.metric(label="Total Categorías de Rareza", value=len(conteos_rareza))
-m3.metric(label="Personajes de Rareza Máxima (Secret)", value=conteos_rareza.get("Secret", 0))
+m3.metric(label="Personajes de Rareza Máxima (OG)", value=conteos_rareza.get("OG", 0))
 
 # Muestra un pequeño desglose rápido de conteos en un expander acoplado
 with st.expander("🔢 Ver total exacto por cada Rareza"):
