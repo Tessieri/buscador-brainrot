@@ -463,7 +463,7 @@ PERSONAJES = {
     "kraken": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
     "digi narwhal": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
     "la supreme combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
-    "love love bear": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "love love love bear": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
     "dragon cannelloni": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
     "signore carapace": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
     "hydra dragon cannelloni": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
@@ -477,8 +477,33 @@ PERSONAJES = {
     "strawberry elephant": {"rareza": "OG", "utilidades": "", "base_pinta": ""}
 }
 
-# --- 3. INTERFAZ GRÁFICA ---
-st.markdown("### 🔍 Panel de Búsqueda")
+# --- 3. PROCESAMIENTO Y CONTEOS (MÓDULO DE CÁLCULO) ---
+total_personajes = len(PERSONAJES)
+
+# Contar cuántos personajes hay por tipo de rareza
+conteos_rareza = {}
+for p_datos in PERSONAJES.values():
+    r = p_datos["rareza"]
+    conteos_rareza[r] = conteos_rareza.get(r, 0) + 1
+
+# --- 4. PANEL DE ESTADÍSTICAS (MÉTRICAS DINÁMICAS) ---
+st.markdown("### 📊 Tablero de Conteos Generales")
+m1, m2, m3 = st.columns(3)
+m1.metric(label="Total Personajes Registrados", value=total_personajes)
+m2.metric(label="Total Categorías de Rareza", value=len(conteos_rareza))
+m3.metric(label="Personajes de Rareza Máxima (Secret)", value=conteos_rareza.get("Secret", 0))
+
+# Muestra un pequeño desglose rápido de conteos en un expander acoplado
+with st.expander("🔢 Ver total exacto por cada Rareza"):
+    columnas_rar = st.columns(4)
+    rarezas_lista = ["Comun", "Raro", "Epico", "Legendario", "Mitico", "Brainrot God", "Secret", "OG"]
+    for idx, r_name in enumerate(rarezas_lista):
+        with columnas_rar[idx % 4]:
+            st.markdown(f"**{r_name}:** `{conteos_rareza.get(r_name, 0)}`")
+
+# --- 5. INTERFAZ GRÁFICA DE BÚSQUEDA ---
+st.write("---")
+st.markdown("### 🔍 Panel de Búsqueda Avanzada")
 consulta = st.text_input(
     "Escribe el nombre completo de un personaje o una base que pinta (Ej. 'Candy', 'Lava', 'Sigma Boy'):", 
     placeholder="Escribe aquí tu consulta..."
@@ -491,7 +516,7 @@ with col1:
         if consulta:
             if consulta in PERSONAJES:
                 p = PERSONAJES[consulta]
-                st.success(f"📊 Información de: **{consulta.title()}**")
+                st.success(f"🎯 ¡Encontrado! Datos de: **{consulta.title()}**")
                 st.write(f"**Rareza:** {p['rareza']}")
                 st.write(f"**Utilidades:** {p['utilidades'] if p['utilidades'] else '*(En blanco)*'}")
                 st.write(f"**Base que pinta:** {p['base_pinta'] if p['base_pinta'] else '*(Ninguna - En blanco)*'}")
@@ -505,29 +530,30 @@ with col2:
         if consulta:
             encontrados = []
             for nombre, datos in PERSONAJES.items():
-                # Revisamos si el tipo de pintura buscado está dentro de su lista de bases
                 if consulta in datos["base_pinta"].lower():
                     encontrados.append((nombre.title(), datos["rareza"]))
             
             if encontrados:
-                st.success(f"✨ Se encontraron {len(encontrados)} personajes que pintan base **'{consulta.title()}'**:")
+                # El sistema cuenta y reporta el número exacto del filtro
+                st.success(f"✨ Conteo: **{len(encontrados)}** personajes pintan base **'{consulta.title()}'**:")
                 for nom, rar in encontrados:
-                    st.write(f"• **{nom}** — ({rar})")
+                    st.write(f"• **{nom}** — *({rar})*")
             else:
                 st.error(f"❌ Ningún personaje tiene asignada la base '{consulta.title()}'.")
         else:
             st.info("Por favor, introduce un tipo de pintura (Ej: Candy, Lava, Galaxy).")
 
-# --- 4. VISUALIZACIÓN COMPLETA POR CATEGORÍAS ---
+# --- 6. VISUALIZACIÓN COMPLETA POR CATEGORÍAS ---
 st.write("---")
-with st.expander("📂 Inspeccionar toda la Base de Datos (Clasificada por Rareza)"):
-    # Obtenemos las rarezas únicas para crear pestañas organizadas
+with st.expander("📂 Inspeccionar toda la Base de Datos (Filtro por Categoría)"):
     rareza_seleccionada = st.selectbox(
-        "Selecciona una categoría para ver los personajes incluidos:",
+        "Selecciona una categoría para desplegar la lista:",
         ["Comun", "Raro", "Epico", "Legendario", "Mitico", "Brainrot God", "Secret", "OG"]
     )
     
-    st.write(f"### Personajes Categoría: {rareza_seleccionada}")
+    # Muestra dinámicamente cuántos hay en la sección elegida justo en el encabezado
+    st.write(f"### Personajes en categoría **{rareza_seleccionada}** (Total: {conteos_rareza.get(rareza_seleccionada, 0)})")
+    
     for nombre, datos in PERSONAJES.items():
         if datos["rareza"] == rareza_seleccionada:
             base = f" | **Pinta:** {datos['base_pinta']}" if datos['base_pinta'] else " | **Pinta:** N/A"
