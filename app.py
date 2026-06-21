@@ -1,71 +1,535 @@
 import streamlit as st
-from google import genai
-from google.genai import types
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
-    page_title="Buscador de Personajes - Brainrot", 
+    page_title="Buscador Steal a Brainrot", 
     page_icon="🔍", 
     layout="centered"
 )
 
-st.title("🔍 Buscador de Personajes - Brainrot")
-st.write("Introduce tu consulta para buscar variantes y rarezas de forma exacta.")
+st.title("🔍 Base de Datos Oficial - Steal a Brainrot")
+st.write("Busca información exacta sobre rarezas, utilidades y bases que pintan.")
 
-# --- 2. BASE DE DATOS DE PERSONAJES (PROMPT ASISTENTE) ---
-INFORMACION_CONTEXTO = """
-Eres un buscador experto y estricto para el juego 'Steal a Brainrot' en Roblox.
-Tu única fuente de verdad es la lista de personajes que tienes abajo. 
-Si el usuario te pide contar o buscar variantes (como 'Candy'), busca de forma literal línea por línea de arriba a abajo.
-No inventes personajes ni asumas variantes si no están en este texto de manera explícita.
-Cuenta con precisión matemática, asegurándote de revisar toda la lista.
+# --- 2. LA BASE DE DATOS LOCAL ---
+PERSONAJES = {
+    "nobini pizzanini": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "lirili larila": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tim cheese": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "fluriflura": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "talpa di fero": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "svinina bombardino": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "nobini santini": {"rareza": "Comun", "utilidades": "", "base_pinta": ""},
+    "raccooni jandelini": {"rareza": "Comun", "utilidades": "", "base_pinta": ""},
+    "pipi kiwi": {"rareza": "Comun", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tartaragno": {"rareza": "Comun", "utilidades": "", "base_pinta": ""},
+    "holy arepa": {"rareza": "Comun", "utilidades": "", "base_pinta": ""},
+    "pipi corni": {"rareza": "Comun", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "trippi troppi": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "gangster footera": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bandito bobritto": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "boneca ambalabu": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "cacto hipopotamo": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "ta ta ta ta sahur": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "cupcake koala": {"rareza": "Raro", "utilidades": "", "base_pinta": ""},
+    "tric trac barabom": {"rareza": "Raro", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "frogo elfo": {"rareza": "Raro", "utilidades": "", "base_pinta": ""},
+    "pipi avocado": {"rareza": "Raro", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "pengolino nuvoletto": {"rareza": "Raro", "utilidades": "", "base_pinta": ""},
+    "pinealotto fruttarino": {"rareza": "Raro", "utilidades": "", "base_pinta": ""},
+    "cappuccino assassino": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "brr brr patapim": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "avocadini antilopini": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "trulimero trulicina": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bambini crostini": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "malame amarele": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "bananita dolphinita": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "perochello lemonchello": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "brri brri bicus dicus bombicus": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "avocadini guffo": {"rareza": "Epico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "ti ti ti sahur": {"rareza": "Epico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "mangolini parrochini": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "frogato pirato": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "gato celesto": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "salamino penguino": {"rareza": "Epico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "doi doi doi": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "penguin tree": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "wombo rollo": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "penguino cocosino": {"rareza": "Epico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "mummio rappitto": {"rareza": "Epico", "utilidades": "", "base_pinta": ""},
+    "burbaloni loliloli": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "chimpanzini bananini": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "ballerina capuccina": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "chef crabracadabra": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "lionel cactuseli": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "glorbo fruttodrillo": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "quivioli ameleonni": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "bluberrini octopusini": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "clickerino crabo": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "caramello filtrello": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "pipi potato": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "strawberrelli flamingelli": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "cocosini mama": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bandito axolito": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "pandaccini bananini": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "quackula": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "pi pi watermelon": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "buho del cielo": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "sigma boy": {"rareza": "Legendario", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "chocco bunny": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "puffaball": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "sigma girl": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "sealo regalo": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "electro quacko": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "buho de fuego": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "seraphino gruyero": {"rareza": "Legendario", "utilidades": "", "base_pinta": ""},
+    "frigo camelo": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "orangutini ananassini": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "rhino toasterino": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bombardiro crocodilo": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "brutto gialutto": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "spioniro golubiro": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bombombini gusini": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "zibra zubra zibralini": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tigrilini watermelini": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "avocadorilla": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "cavallo virtuoso": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "gorillo subwoofero": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "gorillo watermelondrillo": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "stoppo luminino": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "tob tobi tobi": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "lerulerulerule": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "ganganzelli trulala": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "te te te sahur": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "rhino helicopterino": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "magi ribbitini": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "tracoducotulu delapeladustuz": {"rareza": "Mitico", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "jingle jingle sahur": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "los noobinis": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "cachorrito melonito": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "spongini quackini": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "carloo": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "bee loco": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "harpuccino": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "carrotini brainini": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "cocoteddy": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "centrucci nuclucci": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "toiletto focaccino": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "jacko spaventosa": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "bananito bandito": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "tree tree tree sahur": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "fizzy soda": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "berenjello angello": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "bucketoro": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "orbi mochi": {"rareza": "Mitico", "utilidades": "", "base_pinta": ""},
+    "cocofanto elefanto": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "girafa celestre": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "gattatino nyanino": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "chihuanini taconini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "matteo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tralalero tralala": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "los crocodillitos": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tigroligre frutonni": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "money money man": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "espresso signora": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "unclito samito": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "odin din din dun": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tipi topi taco": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "alessio": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "tralalita tralala": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "orcalero orcala": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tukanno bananno": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "extinct ballerina": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "vampira cappucina": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "jacko jack jack": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "urubini flamenguini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "trenostuzzo turbo 3000": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "capi taco": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "los chihuaninis": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "divino platypio": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "gattito tacoto": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "trippi troppi troppa trippa": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "sundrilla sundae": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "las capuchinas": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "ballerino lololo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "pineaplino": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "bulbito bandito traktorito": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "los tungtungtungcitos": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "pakrahmatmamat": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "ballerina peppermintina": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "los bombinitos": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "bombardini tortini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "pakrahmatmatina": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "brr es teh patipum": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "piccione macchina": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tractoro dinosauro": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "los orcalitos": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "grabbo limonetta": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "orcalita orcala": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "cacasito satalito": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "aquanaut": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "squalanana": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "corn corn corn sahur": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "tartaruga cisterna": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "mummy ambalabu": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "snailenzo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "lazy ducky": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "trenotubo axolotrico 9000": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "yeti claus": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "ginger globo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "tootini shrimpini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "los tipi tacos": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "granchiello spiritello": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "frio ninja": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "lumaca malefica": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "buho de noelo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "boba panda": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "bunny tralala": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "piccionetta macchina": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "bambu bambu sahur": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "los gattitos": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "mastodontico telepiedone": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "christmasmamat": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "anpali babel": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "limonita splashita": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "noo la polizia": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "astrolero cervalero": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "cappuccino clownino": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "brasilini berimbini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "luv luv luv": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "patteo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "krupuk pagi pagi": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "skull skull skull": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "belula beluga": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "cocoa assassino": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "tentacolo tecnico": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "ginger cisterna": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "pandanini frostini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "dolphini jetskini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "pop pop sahur": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "karkerheart luvkur": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "appelini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "clovkur kurkur": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "eggdin egg egg dun": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "dumborino miracello": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "flippo marino": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "robo grafito": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "tortuginni sandcastlini": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "pretzo robo": {"rareza": "Brainrot God", "utilidades": "", "base_pinta": ""},
+    "jackorilla": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "sammyni spyderini": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "la vacca saturno saturnita": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "karkerkar kurkur": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "los matteos": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bisonte giuppitere": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "trenostruzzo turbo 4000": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tortuginni dragonfrutini": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "dul dul dul": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "blackhole goat": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chachechi": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "agarrini la palini": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "los spyderinis": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "extinct tralalero": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la cucaracha": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los tortus": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los tralaleritos": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "zombie tralala": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "vulturino skeletono": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "boatito auratito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "guerriro digitale": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "yess my examine": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la vacca prese presente": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la karkerkar combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "reindeer tralala": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "extinct mateo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "las tralaleritas": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "pumpkini spyderini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rocco disco": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "frankentteo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los trios": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "job job job sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "karker sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "las vaquitas saturnitas": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "los karkeritos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "santteo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "fishboard": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la vacca jacko linterino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "buntteo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "triplito tralaleritos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "trickolino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "paradiso axolottino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "goat": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "giftini spyderini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "perrito burrito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "graipuss medussi": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "love love love sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bombardiro vaccariro": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la vacca lepre leprino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "1x1x1x1": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los cucarachas": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "easter easter easter sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "craburger": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "please my present": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cuadramat and pakrahmatmamat": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los jobcitos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bunnyman": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "berryno": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "nooo my hotspot": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "noo my examine": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "telemorte": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la sahur combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "list list list sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "to to to sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bunny bunny bunny sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "glaciator": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "pirulitoita bicicleteira": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "pot hotspot": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "25": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "santa hotspot": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "buho de volto": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "horegini boom": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rocketini frostini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "pot pumpkin": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "naughty naughty": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "quesadilla crocodila": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bunito bunito spinito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cupid cupid sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "ho ho ho sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "mi gatito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "octoball": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cupid hotspot": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "quesadillo vampiro": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "brunito marsito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "eid eid eid sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chicleteira bicicleteira": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "luck luck luck sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "flancito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "burrito bandito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chicleterina bichicleterina": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "granny": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chill puppy": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los bunitos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "futbolini skatini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los quesadillas": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "noo my candy": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "arcadopus": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los nooo my hotspotsitos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "serafinna medusella": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "noo my present": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rang ring bus": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "flipa sandala": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los mi gatitos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "obrello topolino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "strawberrita": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los chicleteiras": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "noo my eggs": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "john doe": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "67": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "donkeyturbo express": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "sushi inu": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los burritos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los 25": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la grande combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "tacodrillo crocodillo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "mariachi corazoni": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "noo my heart": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "swag soda": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "noo my gold": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chimnino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "nuclearo dinossauro": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "bananito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chicleteira noelteira": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los combinasionas": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "baskito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tacorita bicicleta": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los sweethearts": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "camera ramena": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "spinny hammy": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "dj panda": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chicleteira cupideira": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "las sis": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "girafini raftini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "snailo clovero": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los planitos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los jolly combinasionas": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cigno fulgoro": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los hotspotsitos": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "frullato flamingo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "las spooky combinasionas": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "churrito bunnito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "money money puggy": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los mobilis": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "capitano gullini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "celularcini viciosini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los 67": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los candies": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los fruits": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la extinct grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los bros": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bacuro and egguru": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la spooky grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "money money reindeer": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chillin chili": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "chipso and queso": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tuff toucan": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "mieteteira bicicleteira": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tralalendon": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "globa steppa": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "goblino uniciclino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "esok sekolah": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "la jolly grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los puggies": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "sand sand sand": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los cupids": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "w or l": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los mariachis": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los primos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "eviledon": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los tacoritas": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "fragola la la la": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "lovin rose": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "abyssaloco": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "coco and mango": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tang tang keletang": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "ketupat kepat": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "dug dug dug": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la taco combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tictac sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la romantic grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "swaggy bros": {"rareza": "Secret", "utilidades": "", "base_pinta": "Radioctive"},
+    "la lucky grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "orcaledon": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "tirilikalika tirilikalako": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "gym bros": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rico dinero": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "ketchuro and musturo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "lavadorito spinito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "jolly jolly sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "gold gold gold": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "money money bros": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "fishino clownino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la anniversary grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "nacho spyder": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rosetti tualetti": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "garama and madundung": {"rareza": "Secret", "utilidades": "", "base_pinta": "Candy, Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "hopilikalika hopilikalako": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "caylusaurus": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "stakini fattini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la easter grande": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "spaghetti tualetti": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cloverat clapat": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "quackini snackini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "ventoliero pavonero": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "guest 666": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "festive 67": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "sammyni fattini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rubrikiko": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los spaghettis": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bearito cabinito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la ginger sekolah": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los hackers": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los chillis": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "ginger gerat": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "sooky and pumpky": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "boppin bunny": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "sammyni cakini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la food combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "duggy bros": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la casa boo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "fragrama and chocrama": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cash or card": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los sekolahs": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "foxini lanternini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "kalika bros": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "antonio": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la secret combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "pancake and syrup": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "fortunu and cashuru": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "los amigos": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "reinito sleighito": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "ketupat bros": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "arcadragon": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "burguro and fryuro": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cooki and milki": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "capitano moby": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "rosey and teddy": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "bunny and eggy": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "popcuru and fizzuru": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "jelly moby": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "celestial pegasus": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "cerberus": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "venuspino": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "elefanto frigo": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "hydra bunny": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "kraken": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "digi narwhal": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "la supreme combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "love love bear": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "dragon cannelloni": {"rareza": "Secret", "utilidades": "", "base_pinta": "Lava, Galaxy, Yin Yang, Cursed, Divine, Cyber, Phantom"},
+    "signore carapace": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "hydra dragon cannelloni": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "dragon gingerini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "dragon aquanini": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "griffin": {"rareza": "Secret", "utilidades": "", "base_pinta": ""},
+    "skibidi toilet": {"rareza": "OG", "utilidades": "", "base_pinta": ""},
+    "john pork": {"rareza": "OG", "utilidades": "", "base_pinta": ""},
+    "meowl": {"rareza": "OG", "utilidades": "", "base_pinta": ""},
+    "headless horseman": {"rareza": "OG", "utilidades": "", "base_pinta": ""},
+    "strawberry elephant": {"rareza": "OG", "utilidades": "", "base_pinta": ""}
+}
 
-[AQUÍ PEGA TU LISTA COMPLETA DE LOS 62 PERSONAJES CON SUS RARIDADES]
-"""
-
-# --- 3. INICIALIZACIÓN SEGURA DEL CLIENTE ---
-def conectar_gemini():
-    if "GEMINI_API_KEY" in st.secrets:
-        try:
-            # Usamos el nuevo cliente oficial e independiente de la librería moderna
-            return genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-        except Exception as e:
-            st.error(f"Error al configurar la conexión de Gemini: {e}")
-            return None
-    else:
-        st.warning("⚠️ La API Key no está configurada en los Secrets de Streamlit. Ve a Settings -> Secrets para agregarla.")
-        return None
-
-client = conectar_gemini()
-
-# --- 4. INTERFAZ GRÁFICA Y LÓGICA DE BÚSQUEDA ---
+# --- 3. INTERFAZ GRÁFICA ---
+st.markdown("### 🔍 Panel de Búsqueda")
 consulta = st.text_input(
-    "¿Qué personaje o variante quieres buscar?", 
-    placeholder="Ej. ¿Cuántos personajes tienen la variante Candy?"
-)
+    "Escribe el nombre completo de un personaje o una base que pinta (Ej. 'Candy', 'Lava', 'Sigma Boy'):", 
+    placeholder="Escribe aquí tu consulta..."
+).strip().lower()
 
-if st.button("Buscar"):
-    if not consulta:
-        st.info("Por favor, escribe una pregunta primero.")
-    elif not client:
-        st.error("La IA no está disponible porque falta la API Key o la configuración es incorrecta.")
-    else:
-        with st.spinner("Escaneando la base de datos con IA..."):
-            try:
-                # Configuramos los parámetros con el nuevo formato 'types'
-                config = types.GenerateContentConfig(
-                    temperature=0.0,
-                    system_instruction=INFORMACION_CONTEXTO
-                )
-                
-                # Llamada directa al modelo usando el cliente moderno
-                resultado = client.models.generate_content(
-                    model='gemini-1.5-flash',
-                    contents=consulta,
-                    config=config
-                )
-                
-                st.success("¡Búsqueda finalizada!")
-                st.write(resultado.text)
-            except Exception as e:
-                st.error(f"Error al procesar la consulta con la IA: {e}")
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("Buscar por Personaje Exacto", use_container_width=True):
+        if consulta:
+            if consulta in PERSONAJES:
+                p = PERSONAJES[consulta]
+                st.success(f"📊 Información de: **{consulta.title()}**")
+                st.write(f"**Rareza:** {p['rareza']}")
+                st.write(f"**Utilidades:** {p['utilidades'] if p['utilidades'] else '*(En blanco)*'}")
+                st.write(f"**Base que pinta:** {p['base_pinta'] if p['base_pinta'] else '*(Ninguna - En blanco)*'}")
+            else:
+                st.error("❌ El personaje no se encuentra registrado en la base de datos.")
+        else:
+            st.info("Por favor, escribe el nombre de un personaje.")
+
+with col2:
+    if st.button("Buscar por Base que Pinta", use_container_width=True):
+        if consulta:
+            encontrados = []
+            for nombre, datos in PERSONAJES.items():
+                # Revisamos si el tipo de pintura buscado está dentro de su lista de bases
+                if consulta in datos["base_pinta"].lower():
+                    encontrados.append((nombre.title(), datos["rareza"]))
+            
+            if encontrados:
+                st.success(f"✨ Se encontraron {len(encontrados)} personajes que pintan base **'{consulta.title()}'**:")
+                for nom, rar in encontrados:
+                    st.write(f"• **{nom}** — ({rar})")
+            else:
+                st.error(f"❌ Ningún personaje tiene asignada la base '{consulta.title()}'.")
+        else:
+            st.info("Por favor, introduce un tipo de pintura (Ej: Candy, Lava, Galaxy).")
+
+# --- 4. VISUALIZACIÓN COMPLETA POR CATEGORÍAS ---
+st.write("---")
+with st.expander("📂 Inspeccionar toda la Base de Datos (Clasificada por Rareza)"):
+    # Obtenemos las rarezas únicas para crear pestañas organizadas
+    rareza_seleccionada = st.selectbox(
+        "Selecciona una categoría para ver los personajes incluidos:",
+        ["Comun", "Raro", "Epico", "Legendario", "Mitico", "Brainrot God", "Secret", "OG"]
+    )
+    
+    st.write(f"### Personajes Categoría: {rareza_seleccionada}")
+    for nombre, datos in PERSONAJES.items():
+        if datos["rareza"] == rareza_seleccionada:
+            base = f" | **Pinta:** {datos['base_pinta']}" if datos['base_pinta'] else " | **Pinta:** N/A"
+            util = f" | **Utilidad:** {datos['utilidades']}" if datos['utilidades'] else ""
+            st.write(f"• **{nombre.title()}**{base}{util}")
