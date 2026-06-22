@@ -394,7 +394,7 @@ PERSONAJES = {
     "la taco combinasion": {"rareza": "Secret", "utilidades": "", "base_pinta": "Ying Yang, Radioactive, Cursed, Divine, Cyber"},
     "tictac sahur": {"rareza": "Secret", "utilidades": "", "base_pinta": "Ying Yang, Radioactive, Cursed, Divine, Cyber"},
     "la romantic grande": {"rareza": "Secret", "utilidades": "", "base_pinta": "Cursed, Divine, Cyber"},
-    "swaggy bros": {"rareza": "Secret", "utilidades": "", "base_pinta": "Radioctive, Cursed, Divine, Cyber"},
+    "swaggy bros": {"rareza": "Secret", "utilidades": "", "base_pinta": "Radioactive, Cursed, Divine, Cyber"},
     "la lucky grande": {"rareza": "Secret", "utilidades": "", "base_pinta": "Divine, Cyber"},
     "orcaledon": {"rareza": "Secret", "utilidades": "", "base_pinta": "Radioactive, Cursed, Divine, Cyber"},
     "tirilikalika tirilikalako": {"rareza": "Secret", "utilidades": "", "base_pinta": "Galaxy, Ying Yang, Radioactive, Cursed, Divine, Cyber"},
